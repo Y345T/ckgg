@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Y345T's Chicken.gg Leaderboard</title>
+    
+    <!-- Link to Creepster Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Creepster', cursive;
+            color: #fff;
+            background: #000; /* Fallback background */
+            overflow: hidden;
+        }
+
+        video#bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the video covers the entire background */
+            z-index: -1; /* Video will be behind the content */
+        }
+
+        .leaderboard-container {
+            text-align: center;
+            padding: 100px 20px; /* Added padding for breathing room */
+            position: relative; /* Ensure leaderboard is above video */
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 80px; /* Adjusted font size for better readability */
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            background: linear-gradient(90deg, #8B0000, #ccff00); /* Gradient text */
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        table {
+            width: 80%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 20px;
+            border-bottom: 1px solid #fff;
+            font-size: 28px; /* Adjusted font size */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            text-align: center; /* Center align table text */
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.1);
+            font-size: 32px; /* Adjusted size for table headers */
+        }
+
+        .rewards {
+            margin-top: 30px;
+            font-size: 32px;
+        }
+
+        .rewards p {
+            margin: 10px 0;
+        }
+
+        .highlight {
+            color: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Video -->
+    <video id="bg-video" autoplay loop muted>
+        <source src="/mnt/data/Dragon-intermission-bg-blank.webm" type="video/webm">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Leaderboard Content -->
+    <div class="leaderboard-container">
+        <h1>Y345T's Chicken.gg Leaderboard</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Total Wager Amount</th>
+                    <th>Weekly Reward</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard">
+                <!-- Populated via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchLeaderboardData() {
+            const apiKey = '46cfb2a080302cde901da6204e739908';
+            const apiUrl = `https://affiliates.chicken.gg/v1/referrals?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                const data = await response.json();
+                console.log(data);  // Log the API response to see its structure
+                return data; // Return the full data so we can inspect it
+            } catch (error) {
+                console.error('Error fetching leaderboard data:', error);
+                return [];
+            }
+        }
+
+        async function populateLeaderboard() {
+            const leaderboardData = await fetchLeaderboardData();
+            const referrals = leaderboardData.referrals || []; // Access the referrals array
+
+            const leaderboardElement = document.getElementById('leaderboard');
+            leaderboardElement.innerHTML = '';
+
+            if (referrals.length === 0) {
+                leaderboardElement.innerHTML = '<tr><td colspan="4">No data available</td></tr>';
+                return;
+            }
+
+            // Sort referrals by wagerAmount in descending order (highest first)
+            referrals.sort((a, b) => b.wagerAmount - a.wagerAmount);
+
+            referrals.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.displayName || 'N/A'}</td>
+                    <td>$${player.wagerAmount || 'N/A'}</td>
+                    <td>${getWeeklyReward(index + 1)}</td>
+                `;
+                leaderboardElement.appendChild(row);
+            });
+        }
+
+        function getWeeklyReward(rank) {
+            switch(rank) {
+                case 1: return '$25';
+                case 2: return '$20';
+                case 3: return '$15';
+                case 4: return '$10';
+                case 5: return '$5';
+                default: return '$0';
+            }
+        }
+
+        window.onload = () => {
+            populateLeaderboard();
+            setInterval(populateLeaderboard, 300000); // Refresh every 5 minutes
+        };
+    </script>
+
+</body>
+</html>
